@@ -6,7 +6,7 @@ const cors = require("cors");
 const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
 
-const guestRoutes = require("../jennyBackend/guestRoutes");
+const guestRoutes = require("./guestRoutes");
 const rsvpRoutes = require("../jennyBackend/rsvpRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const guestAdminRoutes = require("./routes/guestAdminRoutes");
