@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Guest = require("../jennyBackend/Guest");
+const Guest = require("./Guest");
 
 // Get all guests
 router.get("/", async (req, res) => {
