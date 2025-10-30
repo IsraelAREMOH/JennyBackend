@@ -1,7 +1,7 @@
 // backend/routes/guestAdminRoutes.js
 const express = require("express");
 const router = express.Router();
-const Guest = require("../../jennyBackend/Guest");
+const Guest = require("../Guest");
 const authJwt = require("../middleware/authJwt");
 const { Parser } = require("json2csv");
 const generateUniqueId = require("../config/constant/generateUniqueID");
