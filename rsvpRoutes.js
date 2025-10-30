@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Guest = require("../jennyBackend/Guest");
+const Guest = require("./Guest");
 
 /**
  * @route GET /api/guest
