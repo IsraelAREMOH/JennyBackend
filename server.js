@@ -16,12 +16,7 @@ const hotelRoutes = require("./routes/hotelRoutes");
 const app = express();
 
 // Middleware
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Allow Vite dev server
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 //cloudinary config
