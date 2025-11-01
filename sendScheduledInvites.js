@@ -3,34 +3,32 @@ const mongoose = require("mongoose");
 const schedule = require("node-schedule");
 const twilio = require("twilio");
 const Guest = require("../jennyBackend/Guest");
-const eventDetails = require("./config/event"); // event.js path
+const eventDetails = require("./config/event");
 
-//  Initialize Twilio client
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 
-//  Read Twilio variables from .env
 const WHATSAPP_NUMBER = process.env.TWILIO_NUMBER;
-const TEMPLATE_SID = process.env.TWILIO_TEMPLATE_SID;
+const TEMPLATE_INVITE_SID = process.env.TWILIO_TEMPLATE_SID; // Invite template
+const TEMPLATE_QR_SID = process.env.TWILIO_TEMPLATE_QR_SID; // QR template
 
-//  Function to send WhatsApp invite
 async function sendWhatsAppInvite(guest) {
   const { firstName, uniqueId, qrUrl, phone } = guest;
   const { coupleNames, date, venue, invitationImageUrl, rsvpBaseUrl } =
     eventDetails;
 
   if (!phone) {
-    console.warn(` Skipping ${firstName} (${uniqueId}) — no phone number`);
+    console.warn(`Skipping ${firstName} (${uniqueId}) — no phone number`);
     return;
   }
 
   const rsvpLink = `${rsvpBaseUrl}?id=${encodeURIComponent(uniqueId)}`;
 
   try {
-    // Send Twilio-approved template message
+    // 1 Send Invite template message
     const inviteMsg = await client.messages.create({
       from: WHATSAPP_NUMBER,
       to: `whatsapp:${phone}`,
-      contentSid: TEMPLATE_SID,
+      contentSid: TEMPLATE_INVITE_SID,
       contentVariables: JSON.stringify({
         1: firstName,
         2: coupleNames,
@@ -38,70 +36,64 @@ async function sendWhatsAppInvite(guest) {
         4: venue,
         5: rsvpLink,
       }),
-      mediaUrl: [invitationImageUrl], // Cloudinary
+      mediaUrl: [invitationImageUrl],
     });
 
-    console.log(` Template sent to ${firstName}: ${inviteMsg.sid}`);
+    console.log(`Template sent to ${firstName}: ${inviteMsg.sid}`);
 
-    // Wait briefly before sending QR (avoids rate limit or ordering issues)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Small delay before second template
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    // 2. Send QR Code message separately
-    try {
-      const qrMsg = await client.messages.create({
-        from: WHATSAPP_NUMBER,
-        to: `whatsapp:${phone}`,
-        body: `Here’s your personal QR code, ${firstName}. Please present this at the venue — strictly by invitation.`,
-        mediaUrl: [qrUrl],
-      });
+    // 2 Send QR template message
+    const qrMsg = await client.messages.create({
+      from: WHATSAPP_NUMBER,
+      to: `whatsapp:${phone}`,
+      contentSid: TEMPLATE_QR_SID,
+      contentVariables: JSON.stringify({
+        1: firstName,
+      }),
+      mediaUrl: [qrUrl],
+    });
 
-      console.log(` QR Code sent to ${firstName}: ${qrMsg.sid}`);
-    } catch (qrError) {
-      console.error(
-        ` QR message failed for ${firstName} (${phone}): ${qrError.message}`
-      );
-    }
+    console.log(`QR template sent to ${firstName}: ${qrMsg.sid}`);
 
-    // 3. Update guest record after both messages
+    // Update guest record
     guest.inviteSent = true;
     guest.inviteSentAt = new Date();
     await guest.save();
   } catch (error) {
     console.error(
-      ` Failed to send invite to ${firstName} (${phone}): ${error.message}`
+      `Failed to send messages to ${firstName} (${phone}): ${error.message}`
     );
   }
 }
 
-//  Scheduler — runs automatically at a set time
+// Scheduler
 async function scheduleInvites() {
   try {
     await mongoose.connect(process.env.MONGO_URL);
-    console.log(" MongoDB connected successfully");
+    console.log("MongoDB connected successfully");
 
-    // Example: schedule for Oct 29, 2025 at 4:29 PM
-    const scheduledDate = new Date(2025, 9, 30, 11, 48, 0);
+    const scheduledDate = new Date(2025, 9, 30, 19, 40, 0);
 
     schedule.scheduleJob(scheduledDate, async function () {
-      console.log(" Scheduled job started. Fetching guest list...");
+      console.log("Scheduled job started. Fetching guest list...");
 
       const guests = await Guest.find({ inviteSent: false });
-      console.log(` Found ${guests.length} guests to invite.`);
+      console.log(`Found ${guests.length} guests to invite.`);
 
       for (const guest of guests) {
         await sendWhatsAppInvite(guest);
-        // wait 10 seconds before next guest to avoid rate limiting
         await new Promise((r) => setTimeout(r, 10000));
       }
 
-      console.log(" All invites sent successfully.");
+      console.log("All invites sent successfully.");
     });
 
-    console.log(` Invites scheduled for ${scheduledDate}`);
+    console.log(`Invites scheduled for ${scheduledDate}`);
   } catch (error) {
-    console.error(" Error initializing scheduler:", error.message);
+    console.error("Error initializing scheduler:", error.message);
   }
 }
 
-//  Run scheduler
 scheduleInvites();
