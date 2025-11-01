@@ -7,6 +7,7 @@ const cloudinary = require("cloudinary").v2;
 // GET /api/guest/:id  → Single guest by uniqueId in path
 router.get("/", async (req, res) => {
   const { id } = req.query;
+  if (id) id = decodeURIComponent(id);
 
   try {
     if (id) {
