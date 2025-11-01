@@ -35,14 +35,4 @@ const guestSchema = new mongoose.Schema(
 // Indexes for performance
 guestSchema.index({ rsvpStatus: 1 });
 
-// Add this at the bottom of your guest.js router
-router.get("/debug/db", async (req, res) => {
-  try {
-    const count = await Guest.countDocuments();
-    res.json({ database: process.env.MONGODB_URI, guestCount: count });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 module.exports = mongoose.model("Guest", guestSchema);

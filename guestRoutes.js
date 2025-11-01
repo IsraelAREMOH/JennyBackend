@@ -4,6 +4,7 @@ const Guest = require("./Guest");
 const cloudinary = require("cloudinary").v2;
 
 // GET /api/guest  → supports ?id= for single guest
+// GET /api/guest/:id  → Single guest by uniqueId in path
 router.get("/", async (req, res) => {
   const { id } = req.query;
 
@@ -23,7 +24,6 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 //  POST /api/guest/rsvp
 //  body: { id, status:"accepted"|"declined", rsvpCount, notes }
 
@@ -110,6 +110,16 @@ router.get("/:id/qr", async (req, res) => {
   } catch (err) {
     console.error("QR download error:", err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Add this at the bottom of your guest.js router
+router.get("/debug/db", async (req, res) => {
+  try {
+    const count = await Guest.countDocuments();
+    res.json({ database: process.env.MONGODB_URI, guestCount: count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
