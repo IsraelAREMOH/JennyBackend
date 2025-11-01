@@ -6,11 +6,12 @@ const cloudinary = require("cloudinary").v2;
 // GET /api/guest  → supports ?id= for single guest
 // GET /api/guest/:id  → Single guest by uniqueId in path
 router.get("/", async (req, res) => {
-  const { id } = req.query;
+  let { id } = req.query;
   if (id) id = decodeURIComponent(id);
 
   try {
     if (id) {
+      id = decodeURIComponent(id);
       // Single guest lookup (for RSVP page)
       const guest = await Guest.findOne({ uniqueId: id });
       if (!guest) return res.status(404).json({ error: "Guest not found" });
