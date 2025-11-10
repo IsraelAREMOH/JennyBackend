@@ -12,6 +12,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const guestAdminRoutes = require("./routes/guestAdminRoutes");
 const validateRoutes = require("./routes/validateRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/admin", adminRoutes); // register / login + protected admin endpoi
 app.use("/api/admin", guestAdminRoutes); // guest management, export (protected)
 app.use("/api/validate", validateRoutes); // public validate endpoints
 app.use("/api/hotels", hotelRoutes);
+app.use("/api/upload-photo", uploadRoutes);
 app.use("/api", rsvpRoutes);
 
 // Connect MongoDB

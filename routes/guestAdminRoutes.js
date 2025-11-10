@@ -1,4 +1,3 @@
-// backend/routes/guestAdminRoutes.js
 const express = require("express");
 const router = express.Router();
 const Guest = require("../Guest");
@@ -65,7 +64,7 @@ router.post("/guests", async (req, res) => {
         .json({ error: "firstName and tableNo are required." });
     }
 
-    // --- upload helper ---
+    // upload helper
     async function uploadToCloudinary(buffer, filename) {
       return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -83,7 +82,7 @@ router.post("/guests", async (req, res) => {
       });
     }
 
-    // --- generate QR + upload ---
+    // generate QR + upload
     async function generateAndUploadQR(uniqueId, tableNo) {
       const qrPayload = JSON.stringify({ uniqueId, tableNo });
       const buffer = await QRCode.toBuffer(qrPayload, {
@@ -124,9 +123,9 @@ router.delete("/guests/:id", async (req, res) => {
     const guest = await Guest.findById(req.params.id);
     if (!guest) return res.status(404).json({ error: "Guest not found" });
 
-    // --- Delete QR image from Cloudinary ---
+    //  Delete QR image from Cloudinary
     if (guest.qrUrl) {
-      // Extract the public_id from the qrUrl (the part after the folder name)
+      // Extract the public_id from the qrUrl the part after the folder name
       const match = guest.qrUrl.match(/wedding_qrcodes\/([^/.]+)/);
       if (match && match[1]) {
         const publicId = `wedding_qrcodes/${match[1]}`;

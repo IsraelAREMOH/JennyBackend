@@ -9,20 +9,20 @@ require("dotenv").config();
 const Guest = require("../jennyBackend/Guest");
 const generateUniqueId = require("./config/constant/generateUniqueID");
 
-// ===== MongoDB Connection =====
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ===== Cloudinary Config =====
+//  Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ===== Utility: Upload to Cloudinary =====
+//  Utility: Upload to Cloudinary
 async function uploadToCloudinary(buffer, filename) {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
@@ -41,7 +41,7 @@ async function uploadToCloudinary(buffer, filename) {
   });
 }
 
-// ===== Generate QR Code and Upload =====
+// Generate QR Code and Upload
 async function generateAndUploadQR(uniqueId, tableNo) {
   try {
     const qrPayload = `http://localhost:5000/api/validate?id=${encodeURIComponent(
@@ -62,7 +62,7 @@ async function generateAndUploadQR(uniqueId, tableNo) {
         return existing.secure_url;
       }
     } catch (err) {
-      if (err.http_code !== 404) throw err; // ignore if not found
+      if (err.http_code !== 404) throw err;
     }
 
     // Generate fresh QR buffer
@@ -81,7 +81,7 @@ async function generateAndUploadQR(uniqueId, tableNo) {
   }
 }
 
-// ===== Validate Row Data (no email or lastName required) =====
+// Validate Row Data no email or lastName required
 function validateRow(row, lineNo) {
   const errors = [];
 
@@ -108,7 +108,7 @@ function validateRow(row, lineNo) {
   return true;
 }
 
-// ===== Process CSV and Insert Guests =====
+// Process CSV and Insert Guests
 async function processCSV(filePath) {
   const rows = [];
   const phones = new Set();
@@ -123,7 +123,7 @@ async function processCSV(filePath) {
         // Step 1: Validate and Deduplicate in CSV
         const validGuests = [];
         rows.forEach((row, index) => {
-          const lineNo = index + 2; // header = line 1
+          const lineNo = index + 2;
           if (!validateRow(row, lineNo)) return;
 
           if (row.phone && phones.has(row.phone)) {
@@ -141,7 +141,7 @@ async function processCSV(filePath) {
           `✅ ${validGuests.length}/${rows.length} guests passed validation`
         );
 
-        // Step 2: Check duplicates in MongoDB (by phone only)
+        // 2 Check duplicates in MongoDB by phone only
         const existingPhones = await Guest.find(
           { phone: { $in: [...phones] } },
           { phone: 1 }
@@ -196,6 +196,6 @@ async function processCSV(filePath) {
     });
 }
 
-// ===== Run Script =====
+// Run Script
 const filePath = path.join(__dirname, "data", "guests.csv");
 processCSV(filePath);

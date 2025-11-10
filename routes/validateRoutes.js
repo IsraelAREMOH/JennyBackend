@@ -44,11 +44,11 @@ router.post("/", async (req, res) => {
 
     guest.attendance = true;
     guest.attendanceConfirmedAt = new Date();
-    // optional: attach staff who scanned
+    // attach staff who scanned
     guest.lastScanBy = staff || null;
     await guest.save();
 
-    // Optional: create a scan log collection/record here (omitted for brevity)
+    //  create a scan log collection/record here omitted for brevity
 
     return res.json({
       ok: true,

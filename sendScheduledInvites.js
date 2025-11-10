@@ -74,7 +74,7 @@ async function scheduleInvites() {
     await mongoose.connect(process.env.MONGO_URL);
     console.log("MongoDB connected successfully");
 
-    const scheduledDate = new Date(2025, 10, 1, 18, 59, 0);
+    const scheduledDate = new Date(2025, 10, 10, 8, 56, 0);
 
     schedule.scheduleJob(scheduledDate, async function () {
       console.log("Scheduled job started. Fetching guest list...");

@@ -13,7 +13,7 @@ function generateGuestId(firstName, tableNo) {
 
 // Ensure ID is unique in DB
 async function generateUniqueId(firstName, tableNo) {
-  console.log(`🧠 Generating unique ID for: ${firstName} (Table ${tableNo})`);
+  console.log(` Generating unique ID for: ${firstName} (Table ${tableNo})`);
   let uniqueId;
   let exists;
   do {

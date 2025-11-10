@@ -3,8 +3,8 @@ const router = express.Router();
 const Guest = require("./Guest");
 const cloudinary = require("cloudinary").v2;
 
-// GET /api/guest  → supports ?id= for single guest
-// GET /api/guest/:id  → Single guest by uniqueId in path
+// GET /api/guest supports ?id= for single guest
+// GET /api/guest/:id  Single guest by uniqueId in path
 router.get("/", async (req, res) => {
   let { id } = req.query;
   if (id) id = decodeURIComponent(id);
@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
       return res.json(guest); // ← return object, not array
     }
 
-    // No id → return all (admin)
+    // No id  return all admin
     const guests = await Guest.find();
     res.json(guests);
   } catch (err) {
@@ -56,7 +56,7 @@ router.post("/rsvp", async (req, res) => {
   }
 });
 
-//  GET /api/guest/validate/:uid   → QR-scan check-in
+//  GET /api/guest/validate/:uid  QR-scan check-in
 
 router.get("/validate/:uid", async (req, res) => {
   const { uid } = req.params;
@@ -78,7 +78,7 @@ router.get("/validate/:uid", async (req, res) => {
   }
 });
 
-//  GET /api/guest/:id/qr   → secure signed QR URL
+//  GET /api/guest/:id/qr  secure signed QR URL
 
 router.get("/:id/qr", async (req, res) => {
   try {
@@ -97,7 +97,7 @@ router.get("/:id/qr", async (req, res) => {
         .json({ error: "QR code cannot be downloaded after check-in" });
     }
 
-    // 3. QR must exist in the DB (pre-generated when guest is created)
+    // 3. QR must exist in the DB pre-generated when guest is created
     if (!guest.qrUrl) {
       return res.status(404).json({ error: "QR code not available" });
     }
@@ -115,7 +115,6 @@ router.get("/:id/qr", async (req, res) => {
   }
 });
 
-// Add this at the bottom of your guest.js router
 router.get("/debug/db", async (req, res) => {
   try {
     const count = await Guest.countDocuments();

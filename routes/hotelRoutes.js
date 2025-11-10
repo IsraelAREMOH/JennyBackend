@@ -26,7 +26,7 @@ router.get("/search", async (req, res) => {
   console.log(` Searching hotels in: ${city}`);
 
   try {
-    //  Step 1: Find destination info
+    //  1. Find destination info
     const destRes = await axios.get(
       `https://${RAPIDAPI_HOST}/api/v1/hotels/searchDestination`,
       {
