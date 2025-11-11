@@ -7,27 +7,19 @@ const router = express.Router();
 // GET /api/gallery
 router.get("/", async (req, res) => {
   try {
-    const { resources } = await cloudinary.search
-      .expression("folder:wedding_uploads")
-      .sort_by("created_at", "desc")
-      .max_results(50) // limit results for performance
-      .execute();
+    // Fetch all images from MongoDB
+    const images = await GalleryImage.find({})
+      .sort({ created_at: -1 }) // latest first
+      .limit(50)
+      .lean();
 
-    const imagesWithLikes = await Promise.all(
-      resources.map(async (img) => {
-        const dbImg = await GalleryImage.findOne({ public_id: img.public_id });
-        return {
-          url: img.secure_url.replace(
-            "/upload/",
-            "/upload/q_auto,f_auto,w_500/"
-          ),
-          public_id: img.public_id,
-          uploader: dbImg?.uploader || "Anonymous",
-          likes: dbImg?.likes || 0,
-          created_at: img.created_at,
-        };
-      })
-    );
+    const imagesWithLikes = images.map((img) => ({
+      url: img.url.replace("/upload/", "/upload/q_auto,f_auto,w_500/"), // optional optimization
+      public_id: img.public_id,
+      uploader: img.uploader,
+      likes: img.likes || 0,
+      created_at: img.created_at,
+    }));
 
     res.json({
       success: true,

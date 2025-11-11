@@ -1,4 +1,3 @@
-// routes/upload-photo.js
 const express = require("express");
 const GalleryImage = require("../model/GalleryImage");
 const multer = require("multer");
