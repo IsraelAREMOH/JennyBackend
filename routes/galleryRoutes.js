@@ -1,5 +1,5 @@
 const express = require("express");
-const GalleryImage = require("../../GalleryImage");
+const GalleryImage = require("../model/GalleryImage");
 const cloudinary = require("cloudinary").v2;
 
 const router = express.Router();
