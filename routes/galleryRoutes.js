@@ -84,4 +84,33 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Increment likes for an image
+router.post("/like", async (req, res) => {
+  const { public_id } = req.body;
+  if (!public_id) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No public_id provided." });
+  }
+
+  try {
+    // Find the image in DB
+    const img = await GalleryImage.findOne({ public_id });
+    if (!img)
+      return res
+        .status(404)
+        .json({ success: false, message: "Image not found." });
+
+    img.likes = (img.likes || 0) + 1;
+    await img.save();
+
+    return res.json({ success: true, likes: img.likes });
+  } catch (err) {
+    console.error("Like error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to like image." });
+  }
+});
+
 module.exports = router;
