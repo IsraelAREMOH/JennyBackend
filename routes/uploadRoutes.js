@@ -1,5 +1,6 @@
 // routes/upload-photo.js
 const express = require("express");
+const GalleryImage = require("../model/GalleryImage");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
@@ -67,6 +68,16 @@ router.post("/", upload.single("photo"), async (req, res) => {
     };
 
     const result = await streamUpload();
+
+    // Save to MongoDB
+    const newImage = new GalleryImage({
+      public_id: result.public_id,
+      url: result.secure_url,
+      uploader: uploader.trim(),
+      likes: 0,
+      created_at: new Date(),
+    });
+    await newImage.save();
 
     res.json({
       success: true,
