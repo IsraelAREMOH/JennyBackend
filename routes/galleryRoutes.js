@@ -1,88 +1,86 @@
+// routes/galleryRoutes.js
 const express = require("express");
 const GalleryImage = require("../model/GalleryImage");
 const cloudinary = require("cloudinary").v2;
 
 const router = express.Router();
 
-// GET /api/gallery
 router.get("/", async (req, res) => {
   try {
-    const { resources } = await cloudinary.search
+    // 1) Pull list from Cloudinary
+    const cloudRes = await cloudinary.search
       .expression("folder:wedding_uploads")
       .sort_by("created_at", "desc")
       .max_results(50)
       .execute();
 
-    const imagesWithLikes = await Promise.all(
+    const resources = Array.isArray(cloudRes?.resources)
+      ? cloudRes.resources
+      : [];
+
+    // 2) For each Cloudinary item, ensure a MongoDB row exists and combine data
+    const imagesWithMetadata = await Promise.all(
       resources.map(async (img) => {
-        // Find in MongoDB
-        let dbImg = await GalleryImage.findOne({ public_id: img.public_id });
+        try {
+          const public_id = img?.public_id;
+          const secure_url = img?.secure_url || null;
+          const created_at = img?.created_at || new Date();
 
-        // If not found, create a Mongo record so it’s always synced
-        if (!dbImg) {
-          dbImg = new GalleryImage({
-            public_id: img.public_id,
-            url: img.secure_url,
-            uploader: "Unknown", // fallback
-            likes: 0,
-            created_at: img.created_at,
-          });
-          await dbImg.save();
-        }
+          // Defensive: if no public_id or no secure_url, skip this resource
+          if (!public_id || !secure_url) {
+            return null;
+          }
 
-        // Return combined data
-        return {
-          url: img.secure_url.replace(
+          // Find or create DB record for this public_id
+          let dbImg = await GalleryImage.findOne({ public_id }).lean();
+
+          if (!dbImg) {
+            // create a minimal record so uploader/likes persist from now on
+            const created = await GalleryImage.create({
+              public_id,
+              url: secure_url,
+              uploader: "Unknown", // minimal safe fallback — you can clean this later
+              likes: 0,
+              created_at,
+            });
+            dbImg = created.toObject();
+          }
+
+          // Use optimized Cloudinary URL for delivery but fall back to db url if needed
+          const urlToUse = secure_url.replace(
             "/upload/",
-            "/upload/q_auto,f_auto,w_500/"
-          ),
-          public_id: img.public_id,
-          uploader: dbImg.uploader,
-          likes: dbImg.likes,
-          created_at: img.created_at,
-        };
+            "/upload/q_auto,f_auto,w_800/"
+          );
+
+          return {
+            url: urlToUse,
+            public_id,
+            uploader: dbImg.uploader || "Unknown",
+            likes: typeof dbImg.likes === "number" ? dbImg.likes : 0,
+            created_at: dbImg.created_at || created_at,
+          };
+        } catch (innerErr) {
+          console.error("Error processing Cloudinary resource", innerErr);
+          return null;
+        }
       })
     );
 
-    res.json({
+    // Filter out any null entries and respond
+    const images = imagesWithMetadata.filter(Boolean);
+
+    return res.json({
       success: true,
-      count: imagesWithLikes.length,
-      images: imagesWithLikes,
+      count: images.length,
+      images,
     });
   } catch (err) {
     console.error("Gallery fetch error:", err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch gallery images.",
+      error: err.message,
     });
-  }
-});
-
-router.post("/like", async (req, res) => {
-  const { public_id, uploader } = req.body;
-
-  if (!public_id || !uploader) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing image ID or uploader name",
-    });
-  }
-
-  try {
-    // Increment likes or create record if not exists
-    const image = await GalleryImage.findOneAndUpdate(
-      { public_id },
-      { $inc: { likes: 1 }, $setOnInsert: { uploader } }, // set uploader if new
-      { new: true, upsert: true } // create if not exist
-    );
-
-    res.json({
-      success: true,
-      likes: image.likes,
-    });
-  } catch (err) {
-    console.error("Error updating likes:", err);
-    res.status(500).json({ success: false, message: "Failed to update likes" });
   }
 });
 
