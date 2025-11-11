@@ -8,7 +8,7 @@ const router = express.Router();
 const RAPIDAPI_KEY = (process.env.RAPIDAPI_KEY || "").trim();
 const RAPIDAPI_HOST = "booking-com15.p.rapidapi.com";
 
-//  Helper: Generate valid arrival/departure dates (today + 2 days)
+//  Generate valid arrival/departure dates (today + 2 days)
 function getBookingDates() {
   const today = new Date();
   const arrival = today.toISOString().split("T")[0];

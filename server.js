@@ -6,8 +6,8 @@ const cors = require("cors");
 const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
 
-const guestRoutes = require("./guestRoutes");
-const rsvpRoutes = require("./rsvpRoutes");
+const guestRoutes = require("./routes/guestRoutes");
+const rsvpRoutes = require("./routes/rsvpRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const guestAdminRoutes = require("./routes/guestAdminRoutes");
 const validateRoutes = require("./routes/validateRoutes");

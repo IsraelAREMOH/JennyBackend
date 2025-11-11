@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Guest = require("./Guest");
+const Guest = require("../Guest");
 const cloudinary = require("cloudinary").v2;
 
 // GET /api/guest supports ?id= for single guest
