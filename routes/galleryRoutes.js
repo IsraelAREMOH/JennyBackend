@@ -7,19 +7,42 @@ const router = express.Router();
 // GET /api/gallery
 router.get("/", async (req, res) => {
   try {
-    // Fetch all images from MongoDB
-    const images = await GalleryImage.find({})
-      .sort({ created_at: -1 }) // latest first
-      .limit(50)
-      .lean();
+    const { resources } = await cloudinary.search
+      .expression("folder:wedding_uploads")
+      .sort_by("created_at", "desc")
+      .max_results(50)
+      .execute();
 
-    const imagesWithLikes = images.map((img) => ({
-      url: img.url.replace("/upload/", "/upload/q_auto,f_auto,w_500/"), // optional optimization
-      public_id: img.public_id,
-      uploader: img.uploader,
-      likes: img.likes || 0,
-      created_at: img.created_at,
-    }));
+    const imagesWithLikes = await Promise.all(
+      resources.map(async (img) => {
+        // Find in MongoDB
+        let dbImg = await GalleryImage.findOne({ public_id: img.public_id });
+
+        // If not found, create a Mongo record so it’s always synced
+        if (!dbImg) {
+          dbImg = new GalleryImage({
+            public_id: img.public_id,
+            url: img.secure_url,
+            uploader: "Unknown", // fallback
+            likes: 0,
+            created_at: img.created_at,
+          });
+          await dbImg.save();
+        }
+
+        // Return combined data
+        return {
+          url: img.secure_url.replace(
+            "/upload/",
+            "/upload/q_auto,f_auto,w_500/"
+          ),
+          public_id: img.public_id,
+          uploader: dbImg.uploader,
+          likes: dbImg.likes,
+          created_at: img.created_at,
+        };
+      })
+    );
 
     res.json({
       success: true,
